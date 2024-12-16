@@ -8,6 +8,7 @@ from sympy.calculus.util import continuous_domain
 from tkinter import ttk
 
 
+
 # Variables globales para manejar los límites de los ejes
 x_min_global = None
 x_max_global = None
@@ -16,6 +17,7 @@ y_max_global = None
 zoom_factor = 0.2  # Tamaño del paso de zoom
 funcion_actual = None  # Variable global para almacenar la función cargada
 funcion_simp = None
+derivada = None
 
 def is_continuous_on_interval(f, a, b):
     try:
@@ -109,19 +111,14 @@ def graficar_funcion():
         
         
         if metodo_seleccionado.get() == "Bisección":
-            resultado = biseccion(iteraciones, tolerancia, a, b)
+            biseccion(iteraciones, tolerancia, a, b)
         elif metodo_seleccionado.get() == "Tangente":
-            resultado = metodo_tangente(iteraciones, tolerancia, (a+b)/2)
+            metodo_tangente(iteraciones, tolerancia, (a+b)/2)
         else:
             messagebox.showerror("Error", "Método no válido seleccionado.")
             return
         
         
-        #biseccion(iteraciones, tolerancia, a, b)
-        #metodo_tangente(iteraciones, tolerancia, (a+b)/2)
-        #hola=evaluar_derivada(f,3)
-        #print("Derivada en 3 ", hola)
-        # Actualizar el lienzo
         canvas.draw()
     except Exception as e:
         messagebox.showerror("Error", f"La función ingresada no es válida: {e}")
@@ -131,7 +128,7 @@ def evaluar_funcion(x):
     try:
         # Evaluar la función almacenada en el punto x
         y = eval(funcion_actual, {"__builtins__": None}, {"x": x, **np.__dict__})
-        return y
+        return float (y)
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo evaluar la función en x = {x}: {e}")
         return None
@@ -228,35 +225,36 @@ def signo(a):
 def biseccion(iteraciones, tolerancia, a, b):
     i=0
     c=a+((b-a)/2)
-    print("Hola mundo")
     if (evaluar_funcion(c)==0):
         print("Valor exacto de la raiz: ", c)
         return c
     
     while(i<iteraciones and abs(evaluar_funcion(c))>tolerancia):
         c=a+((b-a)/2)
-        if (evaluar_funcion(c)==0):
-            print("Valor exacto de la raiz: ", c)
-            return c
 
         i+=1
         print ("Iteración: ", i)
-        print("Valor de a: ", a)
-        print("Valor de b: ", b)
-        print("Valor aproximado de la raiz: ", c)
+        print("Valor de a: ", a, "      Funcion evaluada en a: ", evaluar_funcion(a))
+        print("Valor de b: ", b, "      Funcion evaluada en b: ", evaluar_funcion(b))
+        if (evaluar_funcion(c)==0):
+            print("Valor exacto de la raiz: ", c)
+            return c
+        print("Valor aproximado de la raiz (c): ", c)
         
         #smp.sign(evaluar_funcion(c))
         if ((signo(evaluar_funcion(c))*signo(evaluar_funcion(a)))>0):
             a=c
         else:
             b=c
-        #ver por que entra aca y despues sigue ejecutando
-        if(abs(evaluar_funcion(c))<tolerancia):
-            print("Procedimiento terminado por llegar al límite de tolerancia.")
-            return
         print("\n")
         
+    if (i==iteraciones):
+        print("El metodo se detiene luego de haber realizado la cantidad maxima de iteraciones.")
+    if(abs(evaluar_funcion(c))<tolerancia):
+        print("Procedimiento terminado por llegar al límite de tolerancia.")
+    print("Valor de la funcion en c: ", evaluar_funcion(c))
     return c
+
 
 
 def evaluar_derivada(x):
@@ -266,28 +264,38 @@ def evaluar_derivada(x):
     return float (derivada.evalf(subs={variable: x}))
 
 
-
 def metodo_tangente(iteraciones, tolerancia, pInicial):
     nuevoP=pInicial
+    print("Aproximacion inicial: ", nuevoP, "\n")
     if (evaluar_funcion(nuevoP)==0):
         print("Valor exacto de la raiz: ", nuevoP)
         return nuevoP   
-    #if (evaluar_derivada(nuevoP)==0):
-    #    nuevoP=nuevoP+0.1
     i=0
     while(i<iteraciones and abs(evaluar_funcion(nuevoP))>tolerancia):
         pAnterior=nuevoP
-        if (evaluar_derivada(pAnterior)==0):
+        i+=1
+        print ("Iteración: ", i)
+        derivada=evaluar_derivada(pAnterior)
+        
+        if ((evaluar_derivada(pAnterior)==0) or derivada is None or not smp.sympify(derivada).is_real):
             print("La derivada es 0. No se puede seguir con el metodo")
             return
         nuevoP=(pAnterior-(evaluar_funcion(pAnterior)/evaluar_derivada(pAnterior)))
+        print(f"Valor encontrado para p{i}", nuevoP)
+        if (evaluar_funcion(nuevoP) is None or not smp.sympify(evaluar_funcion(nuevoP)).is_real):
+            print(f"El valor de la funcion en p{i} no es real. No se puede seguir")
+            return
         if (evaluar_funcion(nuevoP)==0):
             print("Valor exacto de la raiz: ", nuevoP)
             return nuevoP   
-        i+=1
-        print ("Iteración: ", i)
+        print("Valor de p", i, ": ", nuevoP)
         print("Valor aproximado de la raiz: ", nuevoP)
-    
+        print("\n")
+    if (i==iteraciones):
+        print("El metodo se detiene luego de haber realizado la cantidad maxima de iteraciones.")
+    if(abs(evaluar_funcion(nuevoP))<tolerancia):
+        print("Procedimiento terminado por llegar al límite de tolerancia.")
+    print("Funcion evaluada en p",i, evaluar_funcion(nuevoP))
     return nuevoP
     
 # Crear la ventana principal
