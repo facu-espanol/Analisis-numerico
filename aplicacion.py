@@ -7,8 +7,6 @@ import sympy as smp
 from sympy.calculus.util import continuous_domain
 from tkinter import ttk
 
-
-
 # Variables globales para manejar los límites de los ejes
 x_min_global = None
 x_max_global = None
@@ -49,6 +47,7 @@ def graficar_funcion():
         # Leer los valores de a, b, iteraciones y tolerancia
         a = float(entrada_a.get())
         b = float(entrada_b.get())
+        aproxInicial = float(aproximacion.get())
         valorIteraciones=entrada_iteraciones.get()
         if (not valorIteraciones):
             iteraciones=100
@@ -65,11 +64,11 @@ def graficar_funcion():
             return
         
         if (not is_continuous_on_interval(f, a, b)):
-            messagebox.showerror("Error", "La funcion no es continua en el intervalo dado.")
+            messagebox.showerror("Error", "La función no es continua en el intervalo dado.")
             return
             
-        if ((evaluar_funcion(a)>0 and evaluar_funcion(b) > 0) or  (evaluar_funcion(a)<0 and evaluar_funcion(b) < 0)):
-            messagebox.showerror("Error", "La funcion debe tomar signos distintos en los extremos del intervalo.")
+        if (signo(evaluar_funcion(a)*signo(evaluar_funcion(b)))>0):
+            messagebox.showerror("Error", "La función debe tomar signos distintos en los extremos del intervalo.")
             return
         
         if iteraciones <= 0:
@@ -81,7 +80,6 @@ def graficar_funcion():
 
         # Almacenar la función ingresada
 
-        # Crear un rango de valores para x con un margen de ±5
         x_min = a
         x_max = b 
         x = np.linspace(x_min, x_max, 500)
@@ -95,6 +93,7 @@ def graficar_funcion():
 
         # Añadir la línea del eje X (y = 0)
         ax.axhline(0, color='black', linewidth=0.8, linestyle='--')
+        ax.axvline(0, color='black', linewidth=0.8, linestyle='--')
 
         ax.set_title(f"Gráfico de la función (Iteraciones: {iteraciones}, Tolerancia: {tolerancia})")
         ax.set_xlabel("x")
@@ -113,7 +112,8 @@ def graficar_funcion():
         if metodo_seleccionado.get() == "Bisección":
             biseccion(iteraciones, tolerancia, a, b)
         elif metodo_seleccionado.get() == "Tangente":
-            metodo_tangente(iteraciones, tolerancia, (a+b)/2)
+            #metodo_tangente(iteraciones, tolerancia, (a+b)/2)
+            metodo_tangente(iteraciones, tolerancia, aproxInicial)
         else:
             messagebox.showerror("Error", "Método no válido seleccionado.")
             return
@@ -234,8 +234,8 @@ def biseccion(iteraciones, tolerancia, a, b):
 
         i+=1
         print ("Iteración: ", i)
-        print("Valor de a: ", a, "      Funcion evaluada en a: ", evaluar_funcion(a))
-        print("Valor de b: ", b, "      Funcion evaluada en b: ", evaluar_funcion(b))
+        print("Valor de a: ", a, "      Función evaluada en a: ", evaluar_funcion(a))
+        print("Valor de b: ", b, "      Función evaluada en b: ", evaluar_funcion(b))
         if (evaluar_funcion(c)==0):
             print("Valor exacto de la raiz: ", c)
             return c
@@ -252,7 +252,7 @@ def biseccion(iteraciones, tolerancia, a, b):
         print("El metodo se detiene luego de haber realizado la cantidad maxima de iteraciones.")
     if(abs(evaluar_funcion(c))<tolerancia):
         print("Procedimiento terminado por llegar al límite de tolerancia.")
-    print("Valor de la funcion en c: ", evaluar_funcion(c))
+    print("Valor de la función en c: ", evaluar_funcion(c))
     return c
 
 
@@ -276,14 +276,15 @@ def metodo_tangente(iteraciones, tolerancia, pInicial):
         i+=1
         print ("Iteración: ", i)
         derivada=evaluar_derivada(pAnterior)
-        
+
         if ((evaluar_derivada(pAnterior)==0) or derivada is None or not smp.sympify(derivada).is_real):
             print("La derivada es 0. No se puede seguir con el metodo")
             return
+        
         nuevoP=(pAnterior-(evaluar_funcion(pAnterior)/evaluar_derivada(pAnterior)))
         print(f"Valor encontrado para p{i}", nuevoP)
         if (evaluar_funcion(nuevoP) is None or not smp.sympify(evaluar_funcion(nuevoP)).is_real):
-            print(f"El valor de la funcion en p{i} no es real. No se puede seguir")
+            print(f"El valor de la función en p{i} no es real. No se puede seguir")
             return
         if (evaluar_funcion(nuevoP)==0):
             print("Valor exacto de la raiz: ", nuevoP)
@@ -295,7 +296,7 @@ def metodo_tangente(iteraciones, tolerancia, pInicial):
         print("El metodo se detiene luego de haber realizado la cantidad maxima de iteraciones.")
     if(abs(evaluar_funcion(nuevoP))<tolerancia):
         print("Procedimiento terminado por llegar al límite de tolerancia.")
-    print("Funcion evaluada en p",i, evaluar_funcion(nuevoP))
+    print("Función evaluada en p",i, evaluar_funcion(nuevoP))
     return nuevoP
     
 # Crear la ventana principal
@@ -323,6 +324,12 @@ etiqueta_b.pack(pady=5)
 entrada_b = tk.Entry(ventana, width=20)
 entrada_b.pack(pady=5)
 
+etiqueta_aprox = tk.Label(ventana, text="Aproximacion inicial:")
+etiqueta_aprox.pack(pady=5)
+
+aproximacion = tk.Entry(ventana, width=20)
+aproximacion.pack(pady=5)
+
 
 # Etiquetas y entradas para iteraciones y tolerancia
 etiqueta_iteraciones = tk.Label(ventana, text="Número de iteraciones:")
@@ -347,7 +354,7 @@ metodos = ["Bisección", "Tangente"]
 menu_metodo = ttk.Combobox(ventana, textvariable=metodo_seleccionado, values=metodos, state="readonly")
 menu_metodo.pack(pady=5)
 # Botón para graficar
-boton_graficar = tk.Button(ventana, text="Graficar", command=graficar_funcion)
+boton_graficar = tk.Button(ventana, text="Calcular raiz y graficar", command=graficar_funcion)
 boton_graficar.pack(pady=10)
 
 # Área para el gráfico
