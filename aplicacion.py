@@ -47,16 +47,22 @@ def graficar_funcion():
         # Leer los valores de a, b, iteraciones y tolerancia
         a = float(entrada_a.get())
         b = float(entrada_b.get())
-        aproxInicial = float(aproximacion.get())
         valorIteraciones=entrada_iteraciones.get()
         if (not valorIteraciones):
             iteraciones=100
         else:
             iteraciones = int(valorIteraciones)
+            
         if (not entrada_tolerancia.get()): 
-            tolerancia = 0.000001
+            tolerancia = 0.00000000001
         else:  
             tolerancia = float(entrada_tolerancia.get())
+            
+        if (not aproximacion.get()): 
+            aproxInicial = (a+b)/2
+        else:  
+            aproxInicial = float(aproximacion.get())
+            
         funcion_actual = funcion
         # Validaciones básicas
         if a >= b:
@@ -229,7 +235,7 @@ def biseccion(iteraciones, tolerancia, a, b):
         print("Valor exacto de la raiz: ", c)
         return c
     
-    while(i<iteraciones and abs(evaluar_funcion(c))>tolerancia):
+    while(i<iteraciones):
         c=a+((b-a)/2)
 
         i+=1
@@ -243,15 +249,20 @@ def biseccion(iteraciones, tolerancia, a, b):
         
         #smp.sign(evaluar_funcion(c))
         if ((signo(evaluar_funcion(c))*signo(evaluar_funcion(a)))>0):
+            anterior=a
             a=c
         else:
+            anterior=b
             b=c
+            
+        if(abs(c-anterior)<tolerancia):
+            print("Procedimiento terminado por llegar al límite de tolerancia.")
+            return c
+        
         print("\n")
         
     if (i==iteraciones):
         print("El metodo se detiene luego de haber realizado la cantidad maxima de iteraciones.")
-    if(abs(evaluar_funcion(c))<tolerancia):
-        print("Procedimiento terminado por llegar al límite de tolerancia.")
     print("Valor de la función en c: ", evaluar_funcion(c))
     return c
 
@@ -271,7 +282,7 @@ def metodo_tangente(iteraciones, tolerancia, pInicial):
         print("Valor exacto de la raiz: ", nuevoP)
         return nuevoP   
     i=0
-    while(i<iteraciones and abs(evaluar_funcion(nuevoP))>tolerancia):
+    while(i<iteraciones):
         pAnterior=nuevoP
         i+=1
         print ("Iteración: ", i)
@@ -282,27 +293,30 @@ def metodo_tangente(iteraciones, tolerancia, pInicial):
             return
         
         nuevoP=(pAnterior-(evaluar_funcion(pAnterior)/evaluar_derivada(pAnterior)))
-        print(f"Valor encontrado para p{i}", nuevoP)
         if (evaluar_funcion(nuevoP) is None or not smp.sympify(evaluar_funcion(nuevoP)).is_real):
             print(f"El valor de la función en p{i} no es real. No se puede seguir")
             return
+        print(f"Valor de p{i}: ", nuevoP)
+        print(f"Funcion evaluada en p{i}: ", evaluar_funcion(nuevoP))
+        print("Tolerancia: ",abs(nuevoP-pAnterior))
         if (evaluar_funcion(nuevoP)==0):
-            print("Valor exacto de la raiz: ", nuevoP)
+            print("\nValor exacto de la raiz: ", nuevoP)
             return nuevoP   
-        print("Valor de p", i, ": ", nuevoP)
-        print("Valor aproximado de la raiz: ", nuevoP)
         print("\n")
+        if(abs(nuevoP-pAnterior)<tolerancia):
+            print("Procedimiento terminado por llegar al límite de tolerancia.")
+            return nuevoP
+        
     if (i==iteraciones):
         print("El metodo se detiene luego de haber realizado la cantidad maxima de iteraciones.")
-    if(abs(evaluar_funcion(nuevoP))<tolerancia):
-        print("Procedimiento terminado por llegar al límite de tolerancia.")
-    print("Función evaluada en p",i, evaluar_funcion(nuevoP))
+    print(f"Función evaluada en p{i}", evaluar_funcion(nuevoP))
     return nuevoP
     
 # Crear la ventana principal
 ventana = tk.Tk()
 ventana.title("Graficador de Funciones")
 ventana.geometry("800x700")
+
 
 # Etiqueta y entrada para la función
 etiqueta_funcion = tk.Label(ventana, text="Introduce una función de x (ejemplo: x**2, sin(x)): ")
@@ -324,7 +338,7 @@ etiqueta_b.pack(pady=5)
 entrada_b = tk.Entry(ventana, width=20)
 entrada_b.pack(pady=5)
 
-etiqueta_aprox = tk.Label(ventana, text="Aproximacion inicial:")
+etiqueta_aprox = tk.Label(ventana, text="Aproximacion inicial (para el metodo de Newton):")
 etiqueta_aprox.pack(pady=5)
 
 aproximacion = tk.Entry(ventana, width=20)
@@ -332,12 +346,12 @@ aproximacion.pack(pady=5)
 
 
 # Etiquetas y entradas para iteraciones y tolerancia
-etiqueta_iteraciones = tk.Label(ventana, text="Número de iteraciones:")
+etiqueta_iteraciones = tk.Label(ventana, text="Número de iteraciones (100 por default):")
 etiqueta_iteraciones.pack(pady=5)
 entrada_iteraciones = tk.Entry(ventana, width=20)
 entrada_iteraciones.pack(pady=5)
 
-etiqueta_tolerancia = tk.Label(ventana, text="Tolerancia:")
+etiqueta_tolerancia = tk.Label(ventana, text="Tolerancia (10^-10 por default):")
 etiqueta_tolerancia.pack(pady=5)
 entrada_tolerancia = tk.Entry(ventana, width=20)
 entrada_tolerancia.pack(pady=5)
@@ -356,6 +370,8 @@ menu_metodo.pack(pady=5)
 # Botón para graficar
 boton_graficar = tk.Button(ventana, text="Calcular raiz y graficar", command=graficar_funcion)
 boton_graficar.pack(pady=10)
+
+
 
 # Área para el gráfico
 fig, ax = plt.subplots(figsize=(7, 5))
