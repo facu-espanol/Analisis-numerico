@@ -58,7 +58,7 @@ def graficar_funcion():
             tolerancia = float(entrada_tolerancia.get())
             
         if (not aproximacion.get()): 
-            aproxInicial = (a+b)/2
+            aproxInicial = a + ((b - a) / 2)
         else:  
             aproxInicial = float(aproximacion.get())
             
