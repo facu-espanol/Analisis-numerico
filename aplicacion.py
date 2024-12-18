@@ -67,7 +67,7 @@ def graficar_funcion():
         if a >= b:
             messagebox.showerror("Error", "El valor de 'a' debe ser menor que 'b'.")
             return
-        if aproxInicial<=a or aproxInicial>=b:
+        if (aproxInicial<=a or aproxInicial>=b) and metodo_seleccionado.get() == "Tangente":
             messagebox.showerror("Error", "La aproximacion inicial debe estar en el intervalo (a,b).")
             return
         
